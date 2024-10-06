@@ -11,6 +11,8 @@ Quiver is a cutting-edge suite of algorithms paired with an interactive web appl
 - Spectrogram display
 - High frequency sections visualization
 
+![alt text](image.png)
+
 ## Installation
 
 To set up Quiver on your local machine, follow these steps:
