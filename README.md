@@ -1,4 +1,4 @@
-# Quiver: Seismic Data Visualization for Mars and Moon
+# Quiver: Seismic Algorithms and Data Visualization for Mars and Moon
 
 Quiver is a cutting-edge suite of algorithms paired with an interactive web application, designed as a comprehensive visualization and learning resource for seismic data analysis from Mars and the Moon. It showcases our team's innovative approaches to arrival time prediction and machine learning-based signal analysis, offering researchers, students, and enthusiasts an intuitive platform to explore complex seismic events. Through its interface, users can delve into detailed waveform analyses, high-resolution spectrograms, and comparative views of different prediction methods, while gaining insights into the inner workings of algorithms like STA/LTA, spectral analysis and our custom AI models. By seamlessly integrating advanced analytical techniques with user-friendly visualizations, Quiver serves as a powerful educational tool and research aid, bridging the gap between raw planetary seismic data and meaningful scientific insights, with an emphasis on energy and communication effficiency.
 
