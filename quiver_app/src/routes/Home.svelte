@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
-  import { Chart, LineSeries } from "svelte-lightweight-charts";
+
   import {
     readJsonFile,
     mars_filenames,
@@ -9,6 +9,29 @@
     fetchSpectrogramData,
   } from "../utils";
   import type { IChartApi } from "lightweight-charts";
+  import { Line } from "svelte-chartjs";
+  import {
+    Chart as ChartJS,
+    Title,
+    Tooltip,
+    Legend,
+    LineElement,
+    LinearScale,
+    PointElement,
+    CategoryScale,
+  } from "chart.js";
+  import annotationPlugin from "chartjs-plugin-annotation";
+
+  ChartJS.register(
+    Title,
+    Tooltip,
+    // Legend,
+    LineElement,
+    LinearScale,
+    PointElement,
+    CategoryScale,
+    annotationPlugin
+  );
 
   let filenames = mars_filenames;
   let selectedPlanet = "mars";
@@ -16,7 +39,16 @@
   let stalta_chart: IChartApi | null;
   let spectrogram_chart: IChartApi | null;
   let selectedFilename = filenames[0];
-  let data: any[] = [];
+  let data = {
+    labels: [0, 1, 2, 3, 4, 5, 6],
+    datasets: [
+      {
+        data: [0, 1, 2, 3, 4, 5, 6],
+      },
+    ],
+  };
+  let spectrogramData = [];
+  let staArrivalTime: number | null = null;
 
   function togglePlanet() {
     selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
@@ -28,58 +60,28 @@
 
   function loadData(filename: string) {
     readJsonFile(`/data_all/${selectedPlanet}/${filename}`).then((v) => {
-      data = v;
-      if (disp_chart) {
-        console.log("disp_chart", disp_chart);
-        disp_chart?.timeScale().fitContent();
-      }
+      data = {
+        labels: v.times.filter((_: any, index: number) => index % 5 === 0),
+        datasets: [
+          {
+            data: v.values.filter((_: any, index: number) => index % 5 === 0),
+            // @ts-ignore
+            pointRadius: 0,
+            borderColor: "rgb(0,0,0,0.6)",
+          },
+        ],
+      };
     });
     fetchStaltaData(selectedPlanet, filename).then((v) => {
       console.log("stalta", v["arr_time_pred"]);
-      if (stalta_chart) {
-        console.log("stalta_chart", stalta_chart);
-        stalta_chart?.timeScale().fitContent();
-
-        // Draw a vertical line at the predicted arrival time
-        if (v.arr_time_pred) {
-          const lineOptions = {
-            price: v.arr_time_pred,
-            color: "#FF0000",
-            lineWidth: 2,
-            lineStyle: 2, // Dashed line
-            axisLabelVisible: true,
-            title: "Predicted Arrival",
-          };
-          // stalta_chart.addLineSeries({
-          //   price: v.arr_time_pred,
-          //   color: "#FF0000",
-          //   lineWidth: 2,
-          //   lineStyle: 2, // Dashed line
-          //   axisLabelVisible: true,
-          //   title: "Predicted Arrival",
-          // });
-        }
-
-        // // If there's a true arrival time, draw another line
-        // if (v.arr_time) {
-        //   const trueLine = {
-        //     price: v.arr_time,
-        //     color: "#00FF00",
-        //     lineWidth: 2,
-        //     lineStyle: 0, // Solid line
-        //     axisLabelVisible: true,
-        //     title: "True Arrival",
-        //   };
-        //   stalta_chart.addLineSeries(trueLine);
-        // }
+      if (v.arr_time_pred) {
+        staArrivalTime = v.arr_time_pred;
+      } else {
+        staArrivalTime = null;
       }
     });
     fetchSpectrogramData(selectedPlanet, filename).then((v) => {
       console.log("spectrogram", v);
-      if (spectrogram_chart) {
-        console.log("spectrogram_chart", spectrogram_chart);
-        spectrogram_chart?.timeScale().fitContent();
-      }
     });
   }
 
@@ -145,18 +147,16 @@
   <main class="flex-grow p-4 bg-base-200 flex flex-col">
     <div class="card bg-base-100 w-full mb-4 h-48 overflow-y-auto">
       <div class="card-body p-4">
-        <Chart
-          width={500}
-          height={150}
-          ref={(ref) => (disp_chart = ref)}
-          timeScale={{
-            timeVisible: true,
-            secondsVisible: true,
-            minBarSpacing: 0.002,
-          }}
-        >
-          <LineSeries {data} reactive={true} />
-        </Chart>
+        <div class="flex flex-col w-1/3 h-full">
+          <!-- stalta -->
+          <Line
+            {data}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+            }}
+          />
+        </div>
       </div>
     </div>
 
@@ -169,17 +169,29 @@
       </div>
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
-          <Chart
-            width={500}
-            height={150}
-            ref={(ref) => (stalta_chart = ref)}
-            timeScale={{
-              timeVisible: true,
-              minBarSpacing: 0.002,
+          <Line
+            {data}
+            width={200}
+            height={120}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                annotation: {
+                  annotations: {
+                    line1: {
+                      type: "line",
+                      scaleID: "x",
+                      value: staArrivalTime ?? 0,
+                      borderColor: "red",
+                      borderWidth: 2,
+                      display: staArrivalTime !== null,
+                    },
+                  },
+                },
+              },
             }}
-          >
-            <LineSeries {data} reactive={true} />
-          </Chart>
+          />
         </div>
       </div>
       <div class="card bg-base-100 flex flex-col">

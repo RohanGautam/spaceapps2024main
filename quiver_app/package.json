@@ -12,6 +12,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "@tsconfig/svelte": "^5.0.4",
+    "@types/plotly.js": "^2.33.4",
     "autoprefixer": "^10.4.20",
     "daisyui": "^4.12.12",
     "postcss": "^8.4.47",
@@ -23,8 +24,11 @@
     "vite": "^5.4.8"
   },
   "dependencies": {
+    "chart.js": "^4.4.4",
+    "chartjs-plugin-annotation": "^3.0.1",
     "lightweight-charts": "^4.2.1",
     "npm": "^10.9.0",
+    "svelte-chartjs": "^3.1.5",
     "svelte-lightweight-charts": "^2.2.0",
     "svelte-routing": "^2.13.0"
   }

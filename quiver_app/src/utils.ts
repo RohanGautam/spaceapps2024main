@@ -12,11 +12,18 @@ export async function readJsonFile(fileName: string): Promise<any> {
     console.log("startTime", startTime);
     console.log("endTime", data[data.length - 1].time);
     console.log("difference", data[data.length - 1].time - startTime);
-    const convertedData = data.map((item: { time: number; value: number }) => ({
-      time: item.time - startTime, // Convert to relative seconds
-      value: item.value,
-    }));
-    return convertedData;
+
+    const times = data.map(
+      (item: { time: number; value: number }) => item.time - startTime
+    );
+    const values = data.map(
+      (item: { time: number; value: number }) => item.value
+    );
+
+    return {
+      times: times,
+      values: values,
+    };
   } catch (error) {
     console.error(`Error reading JSON file ${fileName}:`, error);
     throw error;
