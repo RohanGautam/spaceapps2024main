@@ -42,6 +42,12 @@ If you have state that's important to retain within a component, consider creati
 ```ts
 // store.ts
 // An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+import { writable } from "svelte/store";
+export default writable(0);
 ```
+
+# Misc
+
+## Attributions
+
+- <a href="https://www.freepik.com/free-vector/grey-full-moon-illustration-white-background_16359327.htm#query=moon%20png&position=0&from_view=keyword&track=ais_hybrid&uuid=155078bc-3795-4ce9-867a-00c7c236eb85">Image by rawpixel.com</a> on Freepik
