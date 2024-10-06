@@ -97,3 +97,25 @@ export async function fetchSpectrogramData(
     throw error;
   }
 }
+
+export async function fetchLanderData(
+  planet: string,
+  filename: string
+): Promise<any> {
+  console.log("fetchLanderData", planet, filename);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/landerdata/${planet}?q=${filename}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching lander data for ${planet}/${filename}:`,
+      error
+    );
+    throw error;
+  }
+}

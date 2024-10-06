@@ -7,8 +7,8 @@
     moon_filenames,
     fetchStaltaData,
     fetchSpectrogramData,
+    fetchLanderData,
   } from "../utils";
-  import type { IChartApi } from "lightweight-charts";
   import { Line } from "svelte-chartjs";
   import {
     Chart as ChartJS,
@@ -21,6 +21,7 @@
     CategoryScale,
   } from "chart.js";
   import annotationPlugin from "chartjs-plugin-annotation";
+  import zoomPlugin from "chartjs-plugin-zoom";
 
   ChartJS.register(
     Title,
@@ -30,14 +31,12 @@
     LinearScale,
     PointElement,
     CategoryScale,
-    annotationPlugin
+    annotationPlugin,
+    zoomPlugin
   );
 
   let filenames = mars_filenames;
   let selectedPlanet = "mars";
-  let disp_chart: IChartApi | null;
-  let stalta_chart: IChartApi | null;
-  let spectrogram_chart: IChartApi | null;
   let selectedFilename = filenames[0];
   let data = {
     labels: [0, 1, 2, 3, 4, 5, 6],
@@ -49,7 +48,11 @@
   };
   let spectrogramData = [];
   let staArrivalTime: number | null = null;
+  let staArrivalTimeOriginal: number | null = null;
   let spectrogramArrivalTime: number | null = null;
+  let spectrogramImage: string | null = null;
+  let lfSignal: string | null = null;
+  let hfSignal: string | null = null;
 
   function togglePlanet() {
     selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
@@ -85,13 +88,25 @@
         } else {
           staArrivalTime = null;
         }
+        if (v.arr_time) {
+          staArrivalTimeOriginal = v.arr_time;
+        } else {
+          staArrivalTimeOriginal = null;
+        }
       });
       fetchSpectrogramData(selectedPlanet, filename).then((v) => {
         console.log("spectrogram", v);
         spectrogramData = v.spectogram;
         spectrogramArrivalTime = v.arr_time_pred;
+        // base64 png image string
+        spectrogramImage = v.spectogram;
         console.log("spectrogramArrivalTime", spectrogramArrivalTime);
       });
+    });
+    fetchLanderData(selectedPlanet, filename).then((v) => {
+      console.log("lander", v);
+      lfSignal = v.lf_signal;
+      hfSignal = v.hf_signal;
     });
   }
 
@@ -157,22 +172,38 @@
   <main class="flex-grow p-4 bg-base-200 flex flex-col">
     <div class="card bg-base-100 w-full mb-4 h-48 overflow-y-auto">
       <div class="card-body p-4">
-        <div class="flex flex-col w-1/3 h-full">
-          <!-- stalta -->
-          <Line
-            {data}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  type: "linear",
-                  position: "bottom",
+        <Line
+          {data}
+          width={1100}
+          height={100}
+          options={{
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              x: {
+                type: "linear",
+                position: "bottom",
+              },
+            },
+            plugins: {
+              zoom: {
+                zoom: {
+                  wheel: {
+                    enabled: true,
+                  },
+                  pinch: {
+                    enabled: true,
+                  },
+                  mode: "xy",
+                },
+                pan: {
+                  enabled: true,
+                  mode: "xy",
                 },
               },
-            }}
-          />
-        </div>
+            },
+          }}
+        />
       </div>
     </div>
 
@@ -180,11 +211,19 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Lander</h2>
-          <p>This is the content for the first card.</p>
+          {#if hfSignal}
+            <p class="text-lg font-bold mt-4">High frequency signal</p>
+            <img src={hfSignal} alt="HF Signal" class="w-full h-auto mt-2" />
+          {/if}
+          {#if lfSignal}
+            <p class="text-lg font-bold mt-4">Low frequency signal</p>
+            <img src={lfSignal} alt="LF Signal" class="w-full h-auto mt-2" />
+          {/if}
         </div>
       </div>
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
+          <p class="text-lg font-bold">STA/LTA Arrival Time</p>
           <Line
             {data}
             width={200}
@@ -209,11 +248,20 @@
                       borderWidth: 2,
                       display: staArrivalTime !== null,
                     },
+                    line2: {
+                      type: "line",
+                      scaleID: "x",
+                      value: staArrivalTimeOriginal ?? 0,
+                      borderColor: "green",
+                      borderWidth: 2,
+                      display: staArrivalTimeOriginal !== null,
+                    },
                   },
                 },
               },
             }}
           />
+          <p class="text-lg font-bold">Spectogram Arrival Time</p>
           <Line
             data={{
               labels: data.labels,
@@ -247,11 +295,27 @@
                       borderWidth: 2,
                       display: staArrivalTime !== null,
                     },
+                    line2: {
+                      type: "line",
+                      scaleID: "x",
+                      value: staArrivalTimeOriginal ?? 0,
+                      borderColor: "green",
+                      borderWidth: 2,
+                      display: staArrivalTimeOriginal !== null,
+                    },
                   },
                 },
               },
             }}
           />
+          {#if spectrogramImage}
+            <p class="text-lg font-bold mt-4">Spectrogram</p>
+            <img
+              src={spectrogramImage}
+              alt="Spectrogram"
+              class="w-full h-auto mt-2"
+            />
+          {/if}
         </div>
       </div>
       <div class="card bg-base-100 flex flex-col">

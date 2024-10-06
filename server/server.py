@@ -1,25 +1,18 @@
 import obspy
-from obspy.clients.fdsn import Client
-from obspy.core import UTCDateTime
 import obspy.signal.trigger
-from scatseisnet import ScatteringNetwork
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import dates as mdates
-import sklearn.decomposition
-from sklearn.decomposition import FastICA, PCA
-from sklearn.cluster import KMeans, DBSCAN
-import umap
-from tqdm.auto import tqdm
 from pathlib import Path
 import pandas as pd
-import datetime
 from scipy import signal
-from matplotlib import cm
 from scipy.ndimage import gaussian_filter1d
-import seaborn as sns
-import json
+import io
+import base64
 
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +20,7 @@ import uvicorn
 from typing import Union
 
 base_dir = Path("../data/space_apps_2024_seismic_detection")
+STREAM_RESAMPLE = 4
 
 
 def load_lunar(base_dir: Path):
@@ -159,6 +153,49 @@ async def root():
     return {"message": "Welcome to the Quiver API"}
 
 
+@app.get("/landerdata/{planet}")
+def lander_api(planet: str, q: Union[str, None] = None):
+    filename = q[:-5]  # remove the .json
+    X_train, y_train, X_test, train_filenames, test_filenames = data[planet]
+
+    ftype = "train" if filename in [f.stem for f in train_filenames] else "test"
+    arr = None
+    if ftype == "train":
+        idx = [f.stem for f in train_filenames].index(filename)
+        stream = X_train[idx].copy()
+        arr = y_train[idx]
+    else:
+        idx = [f.stem for f in test_filenames].index(filename)
+        stream = X_test[idx].copy()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(stream[0].times(), stream[0].data)
+    plt.axis("off")
+
+    # Save the image to a BytesIO object
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", pad_inches=0)
+    img_buffer.seek(0)
+    plt.close()
+    hf_str = base64.b64encode(img_buffer.getvalue()).decode()
+
+    stream.resample(STREAM_RESAMPLE)
+    plt.figure(figsize=(10, 6))
+    plt.plot(stream[0].times(), stream[0].data)
+    plt.axis("off")
+
+    # Save the image to a BytesIO object
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", pad_inches=0)
+    img_buffer.seek(0)
+    plt.close()
+    lf_str = base64.b64encode(img_buffer.getvalue()).decode()
+    return {
+        "lf_signal": f"data:image/png;base64,{lf_str}",
+        "hf_signal": f"data:image/png;base64,{hf_str}",
+    }
+
+
 @app.get("/stalta/{planet}")
 def stalta_api(planet: str, q: Union[str, None] = None):
     filename = q[:-5]  # remove the .json
@@ -168,16 +205,17 @@ def stalta_api(planet: str, q: Union[str, None] = None):
     arr = None
     if ftype == "train":
         idx = [f.stem for f in train_filenames].index(filename)
-        stream = X_train[idx]
+        stream = X_train[idx].copy()
         arr = y_train[idx]
     else:
         idx = [f.stem for f in test_filenames].index(filename)
-        stream = X_test[idx]
+        stream = X_test[idx].copy()
 
+    stream.resample(STREAM_RESAMPLE)
     if planet == "moon":
         arr_time, out = make_stalta_prediction(stream, 600, 10000)
     else:
-        arr_time, out = make_stalta_prediction(stream, 120, 600)
+        arr_time, out = make_stalta_prediction(stream, 12, 60)
 
     return {
         "planet": planet,
@@ -197,26 +235,38 @@ def spectogram_api(planet: str, q: Union[str, None] = None):
     arr = None
     if ftype == "train":
         idx = [f.stem for f in train_filenames].index(filename)
-        stream = X_train[idx]
+        stream = X_train[idx].copy()
         arr = y_train[idx]
     else:
         idx = [f.stem for f in test_filenames].index(filename)
-        stream = X_test[idx]
+        stream = X_test[idx].copy()
 
+    # stream.resample(STREAM_RESAMPLE)
     if planet == "moon":
         arr_time, stream2, sxx, t = make_spectogram_prediction(stream, 1, 2)
     else:
-        arr_time, stream2, sxx, t = make_spectogram_prediction(stream, 1, 5)
+        arr_time, stream2, sxx, t = make_spectogram_prediction(stream, 1, 2)
 
-    # Convert 2D numpy array to a list of lists
-    sxx_list = sxx.tolist()
+    # Create the spectrogram image
+    plt.figure(figsize=(10, 6))
+    plt.imshow(sxx, cmap=cm.jet, aspect="auto")
+    plt.axis("off")
+
+    # Save the image to a BytesIO object
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", pad_inches=0)
+    img_buffer.seek(0)
+    plt.close()
+
+    # Encode the image to base64
+    img_str = base64.b64encode(img_buffer.getvalue()).decode()
 
     return {
         "planet": planet,
         "filename": filename,
         "arr_time": arr,
         "arr_time_pred": arr_time,
-        "spectogram": sxx_list,
+        "spectogram": f"data:image/png;base64,{img_str}",
     }
 
 
