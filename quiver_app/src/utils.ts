@@ -80,6 +80,7 @@ export async function fetchSpectrogramData(
   planet: string,
   filename: string
 ): Promise<any> {
+  console.log("fetchSpectrogramData", planet, filename);
   try {
     const response = await fetch(
       `${API_BASE_URL}/spectogram/${planet}?q=${filename}`

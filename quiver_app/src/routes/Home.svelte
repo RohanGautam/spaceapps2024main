@@ -49,6 +49,7 @@
   };
   let spectrogramData = [];
   let staArrivalTime: number | null = null;
+  let spectrogramArrivalTime: number | null = null;
 
   function togglePlanet() {
     selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
@@ -61,27 +62,36 @@
   function loadData(filename: string) {
     readJsonFile(`/data_all/${selectedPlanet}/${filename}`).then((v) => {
       data = {
-        labels: v.times.filter((_: any, index: number) => index % 5 === 0),
+        // labels: v.times.filter((_: any, index: number) => index % 15 === 0),
         datasets: [
           {
-            data: v.values.filter((_: any, index: number) => index % 5 === 0),
+            // data: v.values.filter((_: any, index: number) => index % 15 === 0),
+            data: v.times
+              .map((time: number, index: number) => ({
+                x: time,
+                y: v.values[index],
+              }))
+              .filter((_: any, index: number) => index % 5 === 0),
             // @ts-ignore
             pointRadius: 0,
             borderColor: "rgb(0,0,0,0.6)",
           },
         ],
       };
-    });
-    fetchStaltaData(selectedPlanet, filename).then((v) => {
-      console.log("stalta", v["arr_time_pred"]);
-      if (v.arr_time_pred) {
-        staArrivalTime = v.arr_time_pred;
-      } else {
-        staArrivalTime = null;
-      }
-    });
-    fetchSpectrogramData(selectedPlanet, filename).then((v) => {
-      console.log("spectrogram", v);
+      fetchStaltaData(selectedPlanet, filename).then((v) => {
+        console.log("stalta", v["arr_time_pred"]);
+        if (v.arr_time_pred) {
+          staArrivalTime = v.arr_time_pred;
+        } else {
+          staArrivalTime = null;
+        }
+      });
+      fetchSpectrogramData(selectedPlanet, filename).then((v) => {
+        console.log("spectrogram", v);
+        spectrogramData = v.spectogram;
+        spectrogramArrivalTime = v.arr_time_pred;
+        console.log("spectrogramArrivalTime", spectrogramArrivalTime);
+      });
     });
   }
 
@@ -154,6 +164,12 @@
             options={{
               responsive: true,
               maintainAspectRatio: false,
+              scales: {
+                x: {
+                  type: "linear",
+                  position: "bottom",
+                },
+              },
             }}
           />
         </div>
@@ -176,6 +192,12 @@
             options={{
               responsive: true,
               maintainAspectRatio: true,
+              scales: {
+                x: {
+                  type: "linear",
+                  position: "bottom",
+                },
+              },
               plugins: {
                 annotation: {
                   annotations: {
@@ -183,6 +205,44 @@
                       type: "line",
                       scaleID: "x",
                       value: staArrivalTime ?? 0,
+                      borderColor: "red",
+                      borderWidth: 2,
+                      display: staArrivalTime !== null,
+                    },
+                  },
+                },
+              },
+            }}
+          />
+          <Line
+            data={{
+              labels: data.labels,
+              datasets: [
+                {
+                  data: data.datasets[0].data,
+                  borderColor: "rgb(0,0,0,0.6)",
+                  pointRadius: 0,
+                },
+              ],
+            }}
+            width={200}
+            height={120}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              scales: {
+                x: {
+                  type: "linear",
+                  position: "bottom",
+                },
+              },
+              plugins: {
+                annotation: {
+                  annotations: {
+                    line1: {
+                      type: "line",
+                      scaleID: "x",
+                      value: spectrogramArrivalTime ?? 0,
                       borderColor: "red",
                       borderWidth: 2,
                       display: staArrivalTime !== null,
