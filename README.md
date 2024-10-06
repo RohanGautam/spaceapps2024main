@@ -46,6 +46,7 @@ To set up Quiver on your local machine, follow these steps:
    ```
 
 4. Open your browser and navigate to `http://localhost:5173/` (or the port specified in the console output).
+5. For experiments, check out `notebooks/` and `main/`
 
 ## Usage
 
