@@ -336,5 +336,36 @@ def high_frequency_sections_api(planet: str, q: Union[str, None] = None):
     }
 
 
+@app.get("/importance/{planet}")
+def importance_api(planet: str, q: Union[str, None] = None):
+    print(planet, q)
+    filename = q[:-5]  # remove the .json
+    path = Path(f"../data/data_importance/{filename}.png")
+
+    # Read and display the image using matplotlib
+    img = plt.imread(path)
+    plt.figure(figsize=(10, 6))
+    plt.imshow(img)
+    plt.axis("off")
+
+    # Save the displayed image to a BytesIO object
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", pad_inches=0)
+    img_buffer.seek(0)
+    plt.close()
+
+    # Get the image data from the buffer
+    img_data = img_buffer.getvalue()
+
+    # Encode the image to base64
+    img_str = base64.b64encode(img_data).decode()
+
+    return {
+        "planet": planet,
+        "filename": filename,
+        "importance": f"data:image/png;base64,{img_str}",
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

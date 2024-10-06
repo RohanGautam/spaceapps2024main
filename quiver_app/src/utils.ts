@@ -141,3 +141,24 @@ export async function fetchHighFrequencySectionsData(
     throw error;
   }
 }
+export async function fetchImportanceData(
+  planet: string,
+  filename: string
+): Promise<any> {
+  console.log("fetchImportanceData", planet, filename);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/importance/${planet}?q=${filename}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching importance data for ${planet}/${filename}:`,
+      error
+    );
+    throw error;
+  }
+}

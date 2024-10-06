@@ -9,6 +9,7 @@
     fetchSpectrogramData,
     fetchLanderData,
     fetchHighFrequencySectionsData,
+    fetchImportanceData,
   } from "../utils";
   import { Line } from "svelte-chartjs";
   import {
@@ -55,7 +56,7 @@
   let lfSignal: string | null = null;
   let hfSignal: string | null = null;
   let hfSectionsImage: string | null = null;
-
+  let importanceImage: string | null = null;
   function togglePlanet() {
     selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
     filenames = selectedPlanet === "mars" ? mars_filenames : moon_filenames;
@@ -113,6 +114,10 @@
     fetchHighFrequencySectionsData(selectedPlanet, filename).then((v) => {
       console.log("high frequency sections", v);
       hfSectionsImage = v.hf_regions;
+    });
+    fetchImportanceData(selectedPlanet, filename).then((v) => {
+      console.log("importance", v);
+      importanceImage = v.importance;
     });
   }
 
@@ -322,6 +327,16 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Earth Station</h2>
+          <div>
+            {#if importanceImage}
+              <p class="text-lg font-bold mt-4">Spectral Importance</p>
+              <img
+                src={importanceImage}
+                alt="Importance"
+                class="w-full h-auto mt-2"
+              />
+            {/if}
+          </div>
           <div>
             <p class="text-lg font-bold mt-4">
               Spectral Coefficients (common to all signals)
