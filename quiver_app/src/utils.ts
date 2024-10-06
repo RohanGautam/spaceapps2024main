@@ -35,6 +35,10 @@ export const mars_filenames = [
 ];
 
 export const moon_filenames = [
-  "XB.ELYSE.02.BHV.2022-01-02HR04_evid0006.json",
-  "XB.ELYSE.02.BHV.2022-02-03HR08_evid0005.json",
+  "xa.s12.00.mhz.1970-01-19HR00_evid00002.json",
+  "xa.s12.00.mhz.1970-03-26HR00_evid00004.json",
+  "xa.s12.00.mhz.1970-03-14HR00_evid00018.json",
+  "xa.s12.00.mhz.1971-01-03HR00_evid00057.json",
+  "xa.s12.00.mhz.1970-03-25HR00_evid00003.json",
+  "xa.s12.00.mhz.1971-06-11HR00_evid00096.json",
 ];
