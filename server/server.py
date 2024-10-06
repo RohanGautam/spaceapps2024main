@@ -270,5 +270,71 @@ def spectogram_api(planet: str, q: Union[str, None] = None):
     }
 
 
+@app.get("/hf_sections/{planet}")
+def high_frequency_sections_api(planet: str, q: Union[str, None] = None):
+    print(planet, q)
+    filename = q[:-5]  # remove the .json
+    X_train, y_train, X_test, train_filenames, test_filenames = data[planet]
+
+    ftype = "train" if filename in [f.stem for f in train_filenames] else "test"
+    arr = None
+    if ftype == "train":
+        idx = [f.stem for f in train_filenames].index(filename)
+        stream = X_train[idx].copy()
+        arr = y_train[idx]
+    else:
+        idx = [f.stem for f in test_filenames].index(filename)
+        stream = X_test[idx].copy()
+
+    stream = stream.filter("lowpass", freq=1.0)
+    stream = stream.filter("highpass", freq=2.0)
+    f, t, sxx = signal.spectrogram(stream[0].data, stream[0].stats.sampling_rate)
+    maxpwr = np.max(sxx, axis=0)
+    smoothed_maxpwr = gaussian_filter1d(maxpwr, sigma=5)
+    # normalise to be between 0 and 1
+    smoothed_maxpwr = (smoothed_maxpwr - np.min(smoothed_maxpwr)) / (
+        np.max(smoothed_maxpwr) - np.min(smoothed_maxpwr)
+    )
+    peaks = signal.find_peaks(smoothed_maxpwr, prominence=1e-2)[0]
+    widths, width_heights, left_ips, right_ips = signal.peak_widths(
+        smoothed_maxpwr, peaks, rel_height=0.5
+    )
+    left_times = t[left_ips.astype(int)]
+    right_times = t[right_ips.astype(int)]
+    widths = np.abs(left_times - right_times)
+
+    x = np.arange(len(smoothed_maxpwr))
+    xp, yp = x[peaks], smoothed_maxpwr[peaks]
+
+    plt.figure(figsize=(10, 6), dpi=300)
+    plt.plot(stream[0].times(), stream[0].data)
+    for peak in peaks:
+        time = t[peak]
+        plt.axvline(time, c="r", linestyle="--", alpha=0.5)
+
+    for left, right in zip(left_times, right_times):
+        # plt.axvline(left, color="g", linewidth=2)
+        # plt.axvline(right, color="g", linewidth=2)
+        plt.fill_between(
+            [left, right], plt.ylim()[0], plt.ylim()[1], color="g", alpha=0.2
+        )
+    # plt.axis("off")
+
+    # Save the image to a BytesIO object
+    img_buffer = io.BytesIO()
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", pad_inches=0)
+    img_buffer.seek(0)
+    plt.close()
+
+    # Encode the image to base64
+    img_str = base64.b64encode(img_buffer.getvalue()).decode()
+
+    return {
+        "planet": planet,
+        "filename": filename,
+        "hf_regions": f"data:image/png;base64,{img_str}",
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

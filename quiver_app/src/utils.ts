@@ -119,3 +119,25 @@ export async function fetchLanderData(
     throw error;
   }
 }
+
+export async function fetchHighFrequencySectionsData(
+  planet: string,
+  filename: string
+): Promise<any> {
+  console.log("fetchHighFrequencySectionsData", planet, filename);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/hf_sections/${planet}?q=${filename}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching high frequency sections data for ${planet}/${filename}:`,
+      error
+    );
+    throw error;
+  }
+}

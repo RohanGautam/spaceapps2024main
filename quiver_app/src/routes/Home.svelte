@@ -8,6 +8,7 @@
     fetchStaltaData,
     fetchSpectrogramData,
     fetchLanderData,
+    fetchHighFrequencySectionsData,
   } from "../utils";
   import { Line } from "svelte-chartjs";
   import {
@@ -53,6 +54,7 @@
   let spectrogramImage: string | null = null;
   let lfSignal: string | null = null;
   let hfSignal: string | null = null;
+  let hfSectionsImage: string | null = null;
 
   function togglePlanet() {
     selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
@@ -107,6 +109,10 @@
       console.log("lander", v);
       lfSignal = v.lf_signal;
       hfSignal = v.hf_signal;
+    });
+    fetchHighFrequencySectionsData(selectedPlanet, filename).then((v) => {
+      console.log("high frequency sections", v);
+      hfSectionsImage = v.hf_regions;
     });
   }
 
@@ -299,7 +305,18 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Earth Station</h2>
-          <p>This is the content for the third card.</p>
+          <div>
+            {#if hfSectionsImage}
+              <p class="text-lg font-bold mt-4">
+                High Frequency Sections extracted from signal
+              </p>
+              <img
+                src={hfSectionsImage}
+                alt="High Frequency Sections"
+                class="w-full h-auto mt-2"
+              />
+            {/if}
+          </div>
         </div>
       </div>
     </div>
