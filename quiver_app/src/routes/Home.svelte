@@ -195,18 +195,34 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Lander</h2>
-          {#if hfSignal}
-            <p class="text-lg font-bold mt-4">High frequency signal</p>
-            <img src={hfSignal} alt="HF Signal" class="w-full h-auto mt-2" />
-          {/if}
-          {#if lfSignal}
-            <p class="text-lg font-bold mt-4">Low frequency signal</p>
-            <img src={lfSignal} alt="LF Signal" class="w-full h-auto mt-2" />
-          {/if}
+          <div class="flex flex-col">
+            {#if hfSignal}
+              <p class="text-lg font-bold mt-4">High frequency signal</p>
+              <img src={hfSignal} alt="HF Signal" class="w-full h-auto mt-2" />
+            {/if}
+            {#if lfSignal}
+              <p class="text-lg font-bold mt-4">Low frequency signal</p>
+              <img src={lfSignal} alt="LF Signal" class="w-full h-auto mt-2" />
+            {/if}
+          </div>
         </div>
       </div>
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
+          <h2 class="card-title">Orbiter</h2>
+          <div>
+            {#if hfSectionsImage}
+              <p class="text-lg font-bold mt-4">
+                High Frequency Sections (green) sent along with low frequency
+                signal
+              </p>
+              <img
+                src={hfSectionsImage}
+                alt="High Frequency Sections"
+                class="w-full h-auto mt-2"
+              />
+            {/if}
+          </div>
           <p class="text-lg font-bold">STA/LTA Arrival Time</p>
           <Line
             {data}
@@ -292,6 +308,7 @@
               },
             }}
           />
+
           {#if spectrogramImage}
             <p class="text-lg font-bold mt-4">Spectrogram</p>
             <img
@@ -305,18 +322,6 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Earth Station</h2>
-          <div>
-            {#if hfSectionsImage}
-              <p class="text-lg font-bold mt-4">
-                High Frequency Sections extracted from signal
-              </p>
-              <img
-                src={hfSectionsImage}
-                alt="High Frequency Sections"
-                class="w-full h-auto mt-2"
-              />
-            {/if}
-          </div>
         </div>
       </div>
     </div>
