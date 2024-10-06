@@ -1,12 +1,40 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
+  import { Chart, LineSeries } from "svelte-lightweight-charts";
+  import { readJsonFile, mars_filenames, moon_filenames } from "../utils";
+  import type { IChartApi } from "lightweight-charts";
 
-  let filenames = ["1.mseed", "2.mseed", "3.mseed"];
-  let selectedPlanet = "moon";
+  let filenames = mars_filenames;
+  let selectedPlanet = "mars";
+  let chartApi: IChartApi | null;
+  let selectedFilename = filenames[0];
+  let data: any[] = [];
 
   function togglePlanet() {
-    selectedPlanet = selectedPlanet === "moon" ? "mars" : "moon";
+    selectedPlanet = selectedPlanet === "mars" ? "moon" : "mars";
+    filenames = selectedPlanet === "mars" ? mars_filenames : moon_filenames;
+    selectedFilename = filenames[0];
+    loadData(selectedFilename);
+    console.log("togglePlanet", selectedPlanet);
   }
+
+  function loadData(filename: string) {
+    readJsonFile(`/data_all/${selectedPlanet}/${filename}`).then((v) => {
+      data = v;
+      if (chartApi) {
+        console.log("chartApi", chartApi);
+        chartApi?.timeScale().fitContent();
+      }
+    });
+  }
+
+  // make this function reactive when the selectedFilename changes
+  $: {
+    loadData(selectedFilename);
+  }
+
+  // Load the first file by default
+  loadData(selectedFilename);
 </script>
 
 <div class="flex flex-col min-h-screen">
@@ -17,11 +45,15 @@
     </div>
     <div class="flex-none gap-6">
       <label class="swap swap-rotate">
-        <input type="checkbox" on:change={togglePlanet} />
+        <input
+          type="checkbox"
+          on:click={togglePlanet}
+          checked={selectedPlanet === "mars"}
+        />
         <div class="swap-off">🌕 Moon</div>
         <div class="swap-on">🔴 Mars</div>
       </label>
-      <select class="select select-primary">
+      <select class="select select-primary" bind:value={selectedFilename}>
         {#each filenames as filename}
           <option value={filename}>{filename}</option>
         {/each}
@@ -57,11 +89,18 @@
 
   <main class="flex-grow p-4 bg-base-200 flex flex-col">
     <div class="card bg-base-100 w-full mb-4 h-48 overflow-y-auto">
-      <div class="card-body p-2">
-        <p>
-          This card spans the full width of the page, providing ample space for
-          important information or a featured section.
-        </p>
+      <div class="card-body p-4">
+        <Chart
+          width={500}
+          height={150}
+          ref={(ref) => (chartApi = ref)}
+          timeScale={{
+            timeVisible: true,
+            minBarSpacing: 0.002,
+          }}
+        >
+          <LineSeries {data} reactive={true} />
+        </Chart>
       </div>
     </div>
 
