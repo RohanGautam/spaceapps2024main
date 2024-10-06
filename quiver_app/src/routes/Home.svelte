@@ -322,6 +322,16 @@
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
           <h2 class="card-title">Earth Station</h2>
+          <div>
+            <p class="text-lg font-bold mt-4">
+              Spectral Coefficients (common to all signals)
+            </p>
+            <p>X: time, Y: Spectral Coefficients</p>
+            <img
+              src="/spectral coefficients.jpeg"
+              alt="Spectral Coefficients"
+            />
+          </div>
         </div>
       </div>
     </div>
