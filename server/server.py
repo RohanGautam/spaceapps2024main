@@ -160,7 +160,7 @@ async def root():
 
 
 @app.get("/stalta/{planet}")
-def read_item(planet: str, q: Union[str, None] = None):
+def stalta_api(planet: str, q: Union[str, None] = None):
     filename = q[:-5]  # remove the .json
     X_train, y_train, X_test, train_filenames, test_filenames = data[planet]
 
@@ -184,6 +184,39 @@ def read_item(planet: str, q: Union[str, None] = None):
         "filename": filename,
         "arr_time": arr,
         "arr_time_pred": arr_time,
+    }
+
+
+@app.get("/spectogram/{planet}")
+def spectogram_api(planet: str, q: Union[str, None] = None):
+    print(planet, q)
+    filename = q[:-5]  # remove the .json
+    X_train, y_train, X_test, train_filenames, test_filenames = data[planet]
+
+    ftype = "train" if filename in [f.stem for f in train_filenames] else "test"
+    arr = None
+    if ftype == "train":
+        idx = [f.stem for f in train_filenames].index(filename)
+        stream = X_train[idx]
+        arr = y_train[idx]
+    else:
+        idx = [f.stem for f in test_filenames].index(filename)
+        stream = X_test[idx]
+
+    if planet == "moon":
+        arr_time, stream2, sxx, t = make_spectogram_prediction(stream, 1, 2)
+    else:
+        arr_time, stream2, sxx, t = make_spectogram_prediction(stream, 1, 5)
+
+    # Convert 2D numpy array to a list of lists
+    sxx_list = sxx.tolist()
+
+    return {
+        "planet": planet,
+        "filename": filename,
+        "arr_time": arr,
+        "arr_time_pred": arr_time,
+        "spectogram": sxx_list,
     }
 
 
