@@ -1,12 +1,20 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
   import { Chart, LineSeries } from "svelte-lightweight-charts";
-  import { readJsonFile, mars_filenames, moon_filenames } from "../utils";
+  import {
+    readJsonFile,
+    mars_filenames,
+    moon_filenames,
+    fetchStaltaData,
+    fetchSpectrogramData,
+  } from "../utils";
   import type { IChartApi } from "lightweight-charts";
 
   let filenames = mars_filenames;
   let selectedPlanet = "mars";
-  let chartApi: IChartApi | null;
+  let disp_chart: IChartApi | null;
+  let stalta_chart: IChartApi | null;
+  let spectrogram_chart: IChartApi | null;
   let selectedFilename = filenames[0];
   let data: any[] = [];
 
@@ -21,9 +29,56 @@
   function loadData(filename: string) {
     readJsonFile(`/data_all/${selectedPlanet}/${filename}`).then((v) => {
       data = v;
-      if (chartApi) {
-        console.log("chartApi", chartApi);
-        chartApi?.timeScale().fitContent();
+      if (disp_chart) {
+        console.log("disp_chart", disp_chart);
+        disp_chart?.timeScale().fitContent();
+      }
+    });
+    fetchStaltaData(selectedPlanet, filename).then((v) => {
+      console.log("stalta", v["arr_time_pred"]);
+      if (stalta_chart) {
+        console.log("stalta_chart", stalta_chart);
+        stalta_chart?.timeScale().fitContent();
+
+        // Draw a vertical line at the predicted arrival time
+        if (v.arr_time_pred) {
+          const lineOptions = {
+            price: v.arr_time_pred,
+            color: "#FF0000",
+            lineWidth: 2,
+            lineStyle: 2, // Dashed line
+            axisLabelVisible: true,
+            title: "Predicted Arrival",
+          };
+          // stalta_chart.addLineSeries({
+          //   price: v.arr_time_pred,
+          //   color: "#FF0000",
+          //   lineWidth: 2,
+          //   lineStyle: 2, // Dashed line
+          //   axisLabelVisible: true,
+          //   title: "Predicted Arrival",
+          // });
+        }
+
+        // // If there's a true arrival time, draw another line
+        // if (v.arr_time) {
+        //   const trueLine = {
+        //     price: v.arr_time,
+        //     color: "#00FF00",
+        //     lineWidth: 2,
+        //     lineStyle: 0, // Solid line
+        //     axisLabelVisible: true,
+        //     title: "True Arrival",
+        //   };
+        //   stalta_chart.addLineSeries(trueLine);
+        // }
+      }
+    });
+    fetchSpectrogramData(selectedPlanet, filename).then((v) => {
+      console.log("spectrogram", v);
+      if (spectrogram_chart) {
+        console.log("spectrogram_chart", spectrogram_chart);
+        spectrogram_chart?.timeScale().fitContent();
       }
     });
   }
@@ -93,9 +148,10 @@
         <Chart
           width={500}
           height={150}
-          ref={(ref) => (chartApi = ref)}
+          ref={(ref) => (disp_chart = ref)}
           timeScale={{
             timeVisible: true,
+            secondsVisible: true,
             minBarSpacing: 0.002,
           }}
         >
@@ -113,8 +169,17 @@
       </div>
       <div class="card bg-base-100 flex flex-col">
         <div class="card-body flex-grow overflow-y-auto">
-          <h2 class="card-title">Orbiter</h2>
-          <p>This is the content for the second card.</p>
+          <Chart
+            width={500}
+            height={150}
+            ref={(ref) => (stalta_chart = ref)}
+            timeScale={{
+              timeVisible: true,
+              minBarSpacing: 0.002,
+            }}
+          >
+            <LineSeries {data} reactive={true} />
+          </Chart>
         </div>
       </div>
       <div class="card bg-base-100 flex flex-col">

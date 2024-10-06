@@ -7,13 +7,16 @@ export async function readJsonFile(fileName: string): Promise<any> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    // Convert time to UTC timestamps
+    // Convert time to relative time starting from zero
+    const startTime = data[0].time;
+    console.log("startTime", startTime);
+    console.log("endTime", data[data.length - 1].time);
+    console.log("difference", data[data.length - 1].time - startTime);
     const convertedData = data.map((item: { time: number; value: number }) => ({
-      time: (item.time / 1000) as UTCTimestamp, // Convert milliseconds to seconds and cast as UTCTimestamp
+      time: item.time - startTime, // Convert to relative seconds
       value: item.value,
     }));
     return convertedData;
-    // return data;
   } catch (error) {
     console.error(`Error reading JSON file ${fileName}:`, error);
     throw error;
@@ -42,3 +45,47 @@ export const moon_filenames = [
   "xa.s12.00.mhz.1970-03-25HR00_evid00003.json",
   "xa.s12.00.mhz.1971-06-11HR00_evid00096.json",
 ];
+
+export const API_BASE_URL = "http://0.0.0.0:8000";
+
+export async function fetchStaltaData(
+  planet: string,
+  filename: string
+): Promise<any> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/stalta/${planet}?q=${filename}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching STA/LTA data for ${planet}/${filename}:`,
+      error
+    );
+    throw error;
+  }
+}
+
+export async function fetchSpectrogramData(
+  planet: string,
+  filename: string
+): Promise<any> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/spectogram/${planet}?q=${filename}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching spectrogram data for ${planet}/${filename}:`,
+      error
+    );
+    throw error;
+  }
+}
